@@ -130,3 +130,66 @@ book := Book{
 ```
 
 ### Accessing struct fields
+
+We can access struct fields by using the dot notation `book.Title`
+
+## 3. Test of strength
+
+### The `fmt.Sprintf` function
+
+Go offers different ways to deal with strings. `fmt.Printf` allows you pass parameters to build a string and then print it while `fmt.Sprintf` also allows parameters but returns the final string instead of printing it.
+
+### The `testing` package
+
+Go provides a package with utils for building self testing function (functions for testing the functionality of other functions)
+
+#### Declaring a test
+
+We can write tests in go like so
+
+```go
+
+package main
+
+import "testing"
+
+func TestBookToString_FormatsBookInfoASString(t *testing.T) {
+ input := Book{
+  Title:  "Sea Room",
+  Author: "Adam Nicolson",
+  Copies: 2,
+ }
+
+ want := "Sea Room, by Adam Nicolson - 2 copies"
+ got := BookToString(input)
+
+ if want != got {
+  t.Fatal("BookToString: wrong result")
+ }
+}
+```
+
+To run this test, we need to create a module in our app
+
+#### Creating a module
+
+A _module_ is a group of packages that live together.
+With the module in place, we can start our tests using `go test`
+
+#### Interpreting the failure output
+
+When printing formatted strings, we can use `%q` to print out strings between double quotes
+
+#### The naming of tests
+
+We can run `go run github.com/bitfield/gotestdox/cmd/gotestdox@latest` in our project to get prettier output for our test results as long as name them as `TestName_ExpectedBehavior`
+
+### Creating a package
+
+#### `main` is not importable
+
+Besides being the only package that can be compiled into an executable binary file, `main` _can't_ be imported
+
+#### Updating the `main` package
+
+You can't have two different packages in the same folder, so we created a new package for our main file in `/cmd/list`. `cmd` is a convention used by go developers to keep packages that are executable.
