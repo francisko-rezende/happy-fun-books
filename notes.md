@@ -193,3 +193,75 @@ Besides being the only package that can be compiled into an executable binary fi
 #### Updating the `main` package
 
 You can't have two different packages in the same folder, so we created a new package for our main file in `/cmd/list`. `cmd` is a convention used by go developers to keep packages that are executable.
+
+## 4. Slicing & dicing
+
+### Slices
+
+Collections of a given type of data are called slices
+
+#### Slice variables and literals
+
+We can initialize slices like so
+
+```go
+// create an empty slice of book
+var books []Book
+
+// assign a value to the variable
+books = []Book{}
+
+// assign a book with an item
+books = []Book{
+  {
+    Title: "Chasing the Thrill",
+    Author: "Daniel Barbarisi"
+  }
+}
+```
+
+#### Indexing slices
+
+Trying to access an index out of bounds results in a panic
+
+We can modify a given item of a slice like so
+
+```go
+books[0] = Book{
+  Title: "The Power Broker",
+  Author: "Robert A. Caro"
+}
+```
+
+We can modify a specific field of a struct in a map like so
+
+```go
+books[0].Title = "The Power Broker"
+```
+
+#### The `len` and `append` functions
+
+We can get the length of a slice using the `len` function
+
+```go
+fmt.Println(len(books))
+// output: 1
+```
+
+We can add new elements to a slice like so:
+
+```go
+newBook := Book{
+  Title: "Skyjack",
+  Author: "Geoffrey Gray"
+}
+
+// returns a new slice with the new item
+books = append(books, newBook)
+```
+
+### A collection of books
+
+#### A global `catalog` variable
+
+The _scope_ of a variable is the part of the program that is allowed to refer to said variable.
