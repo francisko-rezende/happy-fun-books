@@ -26,13 +26,13 @@ func TestGetAllBooks_ReturnsAllBooks(t *testing.T) {
 	t.Parallel()
 	want := []books.Book{
 		{
-			BookID: 1,
+			BookID: "a",
 			Title:  "In the company of cheerful ladies",
 			Author: "Alexander McCall Smith",
 			Copies: 1,
 		},
 		{
-			BookID: 2,
+			BookID: "b",
 			Title:  "White Heat",
 			Author: "Dominic Sandbrook",
 			Copies: 2,
@@ -49,13 +49,13 @@ func TestGetAllBooks_ReturnsAllBooks(t *testing.T) {
 func TestGetBook_ReturnsBookByBookID(t *testing.T) {
 	t.Parallel()
 	want := books.Book{
-		BookID: 1,
+		BookID: "a",
 		Title:  "In the company of cheerful ladies",
 		Author: "Alexander McCall Smith",
 		Copies: 1,
 	}
 
-	got, ok := books.GetBook(1)
+	got, ok := books.GetBook("a")
 
 	if !ok {
 		t.Fatal("book not found")
@@ -69,7 +69,7 @@ func TestGetBook_ReturnsBookByBookID(t *testing.T) {
 func TestGetBook_ReturnsFalseWhenBookNotFound(t *testing.T) {
 	t.Parallel()
 
-	_, ok := books.GetBook(999)
+	_, ok := books.GetBook("xyz")
 
 	if ok {
 		t.Fatal("want false for nonexistent ID, got true")

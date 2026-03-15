@@ -5,7 +5,7 @@ import (
 )
 
 type Book struct {
-	BookID int
+	BookID string
 	Title  string
 	Author string
 	Copies int
@@ -13,20 +13,20 @@ type Book struct {
 
 var catalog = []Book{
 	{
-		BookID: 1,
+		BookID: "a",
 		Title:  "In the company of cheerful ladies",
 		Author: "Alexander McCall Smith",
 		Copies: 1,
 	},
 	{
-		BookID: 2,
+		BookID: "b",
 		Title:  "White Heat",
 		Author: "Dominic Sandbrook",
 		Copies: 2,
 	},
 }
 
-func GetBook(bookID int) (Book, bool) {
+func GetBook(bookID string) (Book, bool) {
 	for _, book := range catalog {
 		if book.BookID == bookID {
 			return book, true
