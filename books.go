@@ -41,5 +41,5 @@ func GetAllBooks() []Book {
 }
 
 func BookToString(book Book) string {
-	return fmt.Sprintf("%v by %v (%v copies)", book.Title, book.Author, book.Copies)
+	return fmt.Sprintf("%v by %v (copies: %v)", book.Title, book.Author, book.Copies)
 }
