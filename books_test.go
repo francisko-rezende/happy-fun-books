@@ -7,6 +7,23 @@ import (
 	"testing"
 )
 
+func getTestCatalog() books.Catalog {
+	return books.Catalog{
+		"a": {
+			BookID: "a",
+			Title:  "In the company of cheerful ladies",
+			Author: "Alexander McCall Smith",
+			Copies: 1,
+		},
+		"b": {
+			BookID: "b",
+			Title:  "White Heat",
+			Author: "Dominic Sandbrook",
+			Copies: 2,
+		},
+	}
+}
+
 func TestBookToString_FormatsBookInfoAsString(t *testing.T) {
 	t.Parallel()
 	input := books.Book{
@@ -16,7 +33,7 @@ func TestBookToString_FormatsBookInfoAsString(t *testing.T) {
 	}
 
 	want := "Sea Room by Adam Nicolson (copies: 2)"
-	got := books.BookToString(input)
+	got := input.String()
 
 	if want != got {
 		t.Fatalf("want %q, got %q", want, got)
@@ -39,9 +56,9 @@ func TestGetAllBooks_ReturnsAllBooks(t *testing.T) {
 			Copies: 2,
 		},
 	}
-	catalog := books.GetCatalog()
+	catalog := getTestCatalog()
 
-	got := books.GetAllBooks(catalog)
+	got := catalog.GetAllBooks()
 	slices.SortFunc(got, func(a, b books.Book) int {
 		return cmp.Compare(a.Author, b.Author)
 	})
@@ -60,8 +77,8 @@ func TestGetBook_ReturnsBookByBookID(t *testing.T) {
 		Copies: 1,
 	}
 
-	catalog := books.GetCatalog()
-	got, ok := books.GetBook(catalog, "a")
+	catalog := getTestCatalog()
+	got, ok := catalog.GetBook("a")
 
 	if !ok {
 		t.Fatal("book not found")
@@ -75,8 +92,8 @@ func TestGetBook_ReturnsBookByBookID(t *testing.T) {
 func TestGetBook_ReturnsFalseWhenBookNotFound(t *testing.T) {
 	t.Parallel()
 
-	catalog := books.GetCatalog()
-	_, ok := books.GetBook(catalog, "xyz")
+	catalog := getTestCatalog()
+	_, ok := catalog.GetBook("xyz")
 
 	if ok {
 		t.Fatal("want false for nonexistent ID, got true")
@@ -86,23 +103,53 @@ func TestGetBook_ReturnsFalseWhenBookNotFound(t *testing.T) {
 func TestAddBook_AddsBookToCatalog(t *testing.T) {
 	t.Parallel()
 	newBookId := "c"
-	catalog := books.GetCatalog()
-	_, ok := books.GetBook(catalog, newBookId)
+	catalog := getTestCatalog()
+	_, ok := catalog.GetBook(newBookId)
 
 	if ok {
 		t.Fatal("book already in catalog")
 	}
 
-	books.AddBook(catalog, books.Book{
+	catalog.AddBook(books.Book{
 		BookID: newBookId,
 		Title:  "Test book title",
 		Author: "Test book author",
 		Copies: 3,
 	})
 
-	_, ok = books.GetBook(catalog, newBookId)
+	_, ok = catalog.GetBook(newBookId)
 
 	if !ok {
 		t.Fatal("Added book not found")
+	}
+}
+
+func TestAddCopies_AddsTheReceivedNumberToABook(t *testing.T) {
+	t.Parallel()
+
+	catalog := getTestCatalog()
+	newCopiesValue := 42
+	book, _ := catalog.GetBook("a")
+
+	err := book.SetCopies(newCopiesValue)
+
+	want := newCopiesValue
+	got := book.Copies
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got != want {
+		t.Fatalf("want %v copies, got %v", want, got)
+	}
+}
+
+func TestAddCopies_MethodReturnsErrorIfItCopiesNegative(t *testing.T) {
+	t.Parallel()
+	book := books.Book{}
+	err := book.SetCopies(-10)
+	if err == nil {
+		t.Fatal("want error for negative copies, got nil")
 	}
 }
