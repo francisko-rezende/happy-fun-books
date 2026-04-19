@@ -6,7 +6,12 @@ import (
 )
 
 func main() {
-	catalog := books.GetCatalog()
+	catalog, err := books.OpenCatalog("testdata/catalog")
+	if err != nil {
+		fmt.Printf("openening catalog%v\n", err)
+		return
+	}
+
 	for _, book := range catalog.GetAllBooks() {
 		fmt.Println(book)
 	}

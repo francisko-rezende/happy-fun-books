@@ -1,0 +1,14 @@
+{
+  "a": {
+    "BookID": "a",
+    "Title": "In the company of cheerful ladies",
+    "Author": "Alexander McCall Smith",
+    "Copies": 1
+  },
+  "b": {
+    "BookID": "b",
+    "Title": "White Heat",
+    "Author": "Dominic Sandbrook",
+    "Copies": 2
+  }
+}

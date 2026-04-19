@@ -153,3 +153,46 @@ func TestAddCopies_MethodReturnsErrorIfItCopiesNegative(t *testing.T) {
 		t.Fatal("want error for negative copies, got nil")
 	}
 }
+
+func TestOpenCatalog_MethodReturnsErrorIfEmptyAddressIsProvided(t *testing.T) {
+	t.Parallel()
+
+	_, err := books.OpenCatalog("")
+
+	if err == nil {
+		t.Fatal("want error for empty string provided to catalog, got nil")
+	}
+}
+
+func TestOpenCatalog_ItReturnsTheDataProperly(t *testing.T) {
+	t.Parallel()
+
+	want := []books.Book{
+		{
+			BookID: "a",
+			Title:  "In the company of cheerful ladies",
+			Author: "Alexander McCall Smith",
+			Copies: 1,
+		},
+		{
+			BookID: "b",
+			Title:  "White Heat",
+			Author: "Dominic Sandbrook",
+			Copies: 2,
+		},
+	}
+	catalog, err := books.OpenCatalog("testdata/catalog")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := catalog.GetAllBooks()
+
+	slices.SortFunc(got, func(a, b books.Book) int {
+		return cmp.Compare(a.Author, b.Author)
+	})
+
+	if !slices.Equal(want, got) {
+		t.Fatalf("want %#v, got %#v", want, got)
+	}
+}

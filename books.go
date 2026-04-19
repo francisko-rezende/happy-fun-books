@@ -1,8 +1,10 @@
 package books
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
 	"slices"
 )
 
@@ -22,24 +24,24 @@ func (b *Book) SetCopies(copies int) error {
 	return nil
 }
 
-type Catalog map[string]Book
-
-func GetCatalog() Catalog {
-	return map[string]Book{
-		"a": {
-			BookID: "a",
-			Title:  "In the company of cheerful ladies",
-			Author: "Alexander McCall Smith",
-			Copies: 1,
-		},
-		"b": {
-			BookID: "b",
-			Title:  "White Heat",
-			Author: "Dominic Sandbrook",
-			Copies: 2,
-		},
+func OpenCatalog(path string) (Catalog, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
 	}
+
+	defer file.Close()
+
+	catalog := Catalog{}
+	err = json.NewDecoder(file).Decode(&catalog)
+	if err != nil {
+		return nil, err
+	}
+
+	return catalog, nil
 }
+
+type Catalog map[string]Book
 
 func (c Catalog) GetAllBooks() []Book {
 	return slices.Collect(maps.Values(c))

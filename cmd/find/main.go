@@ -8,15 +8,19 @@ import (
 
 func main() {
 	args := os.Args
-	catalog := books.GetCatalog()
-
 	if len(args) != 2 {
 		fmt.Println("Usage: find <book id>")
 		return
 	}
 
-	id := args[1]
-	book, ok := catalog.GetBook(id)
+	catalog, err := books.OpenCatalog("testdata/catalog")
+	if err != nil {
+		fmt.Printf("opening catalog %v\n", err)
+		return
+	}
+
+	ID := args[1]
+	book, ok := catalog.GetBook(ID)
 
 	if !ok {
 		fmt.Println("Sorry, I couldn't find that book in the catalog")
