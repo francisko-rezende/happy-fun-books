@@ -24,6 +24,10 @@ func (b *Book) SetCopies(copies int) error {
 	return nil
 }
 
+func (b Book) String() string {
+	return fmt.Sprintf("%v by %v (copies: %v)", b.Title, b.Author, b.Copies)
+}
+
 func OpenCatalog(path string) (Catalog, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -57,6 +61,28 @@ func (c Catalog) AddBook(book Book) {
 	c[book.BookID] = book
 }
 
-func (b Book) String() string {
-	return fmt.Sprintf("%v by %v (copies: %v)", b.Title, b.Author, b.Copies)
+func (c Catalog) Sync(path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = json.NewEncoder(file).Encode(c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c Catalog) SetCopies(id string, copies int) error {
+	book, ok := c[id]
+	if !ok {
+		return fmt.Errorf("ID %q not found", id)
+	}
+	err := book.SetCopies(copies)
+	if err != nil {
+		return err
+	}
+	c[id] = book
+	return nil
 }

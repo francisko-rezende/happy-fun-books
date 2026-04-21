@@ -42,30 +42,9 @@ func TestBookToString_FormatsBookInfoAsString(t *testing.T) {
 
 func TestGetAllBooks_ReturnsAllBooks(t *testing.T) {
 	t.Parallel()
-	want := []books.Book{
-		{
-			BookID: "a",
-			Title:  "In the company of cheerful ladies",
-			Author: "Alexander McCall Smith",
-			Copies: 1,
-		},
-		{
-			BookID: "b",
-			Title:  "White Heat",
-			Author: "Dominic Sandbrook",
-			Copies: 2,
-		},
-	}
 	catalog := getTestCatalog()
-
 	got := catalog.GetAllBooks()
-	slices.SortFunc(got, func(a, b books.Book) int {
-		return cmp.Compare(a.Author, b.Author)
-	})
-
-	if !slices.Equal(want, got) {
-		t.Fatalf("want %#v got %#v", want, got)
-	}
+	assertTestBooks(t, got)
 }
 
 func TestGetBook_ReturnsBookByBookID(t *testing.T) {
@@ -110,12 +89,15 @@ func TestAddBook_AddsBookToCatalog(t *testing.T) {
 		t.Fatal("book already in catalog")
 	}
 
-	catalog.AddBook(books.Book{
+	err := catalog.AddBook(books.Book{
 		BookID: newBookId,
 		Title:  "Test book title",
 		Author: "Test book author",
 		Copies: 3,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	_, ok = catalog.GetBook(newBookId)
 
@@ -124,18 +106,34 @@ func TestAddBook_AddsBookToCatalog(t *testing.T) {
 	}
 }
 
-func TestAddCopies_AddsTheReceivedNumberToABook(t *testing.T) {
+func TestAddBook_DoesntAllowAddingABookWithAnExtantId(t *testing.T) {
 	t.Parallel()
+	catalog := getTestCatalog()
+	_, ok := catalog.GetBook("a")
+	if !ok {
+		t.Fatalf("book with id %q not found", "a")
+	}
+	input := books.Book{
+		BookID: "a",
+		Title:  "New book",
+		Author: "New author",
+		Copies: 5,
+	}
 
+	err := catalog.AddBook(input)
+	if err == nil {
+		t.Error("expect error when trying to add a book with an id that is already present in the catalog")
+	}
+}
+
+func TestSetCopies_AddsTheReceivedNumberToABook(t *testing.T) {
+	t.Parallel()
 	catalog := getTestCatalog()
 	newCopiesValue := 42
 	book, _ := catalog.GetBook("a")
-
 	err := book.SetCopies(newCopiesValue)
-
 	want := newCopiesValue
 	got := book.Copies
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +143,7 @@ func TestAddCopies_AddsTheReceivedNumberToABook(t *testing.T) {
 	}
 }
 
-func TestAddCopies_MethodReturnsErrorIfItCopiesNegative(t *testing.T) {
+func TestSetCopies_MethodReturnsErrorIfItCopiesNegative(t *testing.T) {
 	t.Parallel()
 	book := books.Book{}
 	err := book.SetCopies(-10)
@@ -156,16 +154,53 @@ func TestAddCopies_MethodReturnsErrorIfItCopiesNegative(t *testing.T) {
 
 func TestOpenCatalog_MethodReturnsErrorIfEmptyAddressIsProvided(t *testing.T) {
 	t.Parallel()
-
 	_, err := books.OpenCatalog("")
-
 	if err == nil {
 		t.Fatal("want error for empty string provided to catalog, got nil")
 	}
 }
 
-func TestOpenCatalog_ItReturnsTheDataProperly(t *testing.T) {
+func TestOpenCatalog_ReadsSameDataWrittenBySync(t *testing.T) {
 	t.Parallel()
+	catalog := getTestCatalog()
+	path := t.TempDir() + "/catalog"
+	err := catalog.Sync(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newCatalog, err := books.OpenCatalog(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := newCatalog.GetAllBooks()
+	assertTestBooks(t, got)
+}
+
+func TestCatalogSetCopies_SetsTheNumberOfCopiesTheBookWithTheReceivedID(t *testing.T) {
+	t.Parallel()
+	catalog := getTestCatalog()
+	book, ok := catalog.GetBook("a")
+	if !ok {
+		t.Fatalf("book with id %v not found", "a")
+	}
+	if book.Copies != 1 {
+		t.Fatalf("want book to have 1 copy before set copies call, got %v", book.Copies)
+	}
+	err := catalog.SetCopies("a", 51)
+	if err != nil {
+		t.Fatal(err)
+	}
+	book, ok = catalog.GetBook("a")
+	if !ok {
+		t.Fatalf("book with id %v not found", "a")
+	}
+	if 51 != book.Copies {
+		t.Fatalf("want %v copies after change, got %v", 51, book.Copies)
+	}
+}
+
+func assertTestBooks(t *testing.T, got []books.Book) {
+	t.Helper()
 
 	want := []books.Book{
 		{
@@ -181,12 +216,6 @@ func TestOpenCatalog_ItReturnsTheDataProperly(t *testing.T) {
 			Copies: 2,
 		},
 	}
-	catalog, err := books.OpenCatalog("testdata/catalog")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	got := catalog.GetAllBooks()
 
 	slices.SortFunc(got, func(a, b books.Book) int {
 		return cmp.Compare(a.Author, b.Author)
