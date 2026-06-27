@@ -7,21 +7,29 @@ import (
 	"testing"
 )
 
-func getTestCatalog() books.Catalog {
-	return books.Catalog{
-		"a": {
-			BookID: "a",
-			Title:  "In the company of cheerful ladies",
-			Author: "Alexander McCall Smith",
-			Copies: 1,
-		},
-		"b": {
-			BookID: "b",
-			Title:  "White Heat",
-			Author: "Dominic Sandbrook",
-			Copies: 2,
-		},
+func getTestCatalog() *books.Catalog {
+	catalog := books.NewCatalog()
+	err := catalog.AddBook(books.Book{
+		BookID: "a",
+		Title:  "In the company of cheerful ladies",
+		Author: "Alexander McCall Smith",
+		Copies: 1,
+	})
+	if err != nil {
+		panic(err)
 	}
+
+	err = catalog.AddBook(books.Book{
+		BookID: "b",
+		Title:  "White Heat",
+		Author: "Dominic Sandbrook",
+		Copies: 2,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return catalog
 }
 
 func TestBookToString_FormatsBookInfoAsString(t *testing.T) {
@@ -126,6 +134,26 @@ func TestAddBook_DoesntAllowAddingABookWithAnExtantId(t *testing.T) {
 	}
 }
 
+func TestSetCopies_IsRaceFree(t *testing.T) {
+	t.Parallel()
+	catalog := getTestCatalog()
+	go func() {
+		for range 100 {
+			err := catalog.SetCopies("a", 0)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}()
+
+	for range 100 {
+		_, err := catalog.GetCopies("a")
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestSetCopies_AddsTheReceivedNumberToABook(t *testing.T) {
 	t.Parallel()
 	catalog := getTestCatalog()
@@ -163,12 +191,12 @@ func TestOpenCatalog_MethodReturnsErrorIfEmptyAddressIsProvided(t *testing.T) {
 func TestOpenCatalog_ReadsSameDataWrittenBySync(t *testing.T) {
 	t.Parallel()
 	catalog := getTestCatalog()
-	path := t.TempDir() + "/catalog"
-	err := catalog.Sync(path)
+	catalog.Path = t.TempDir() + "/catalog"
+	err := catalog.Sync()
 	if err != nil {
 		t.Fatal(err)
 	}
-	newCatalog, err := books.OpenCatalog(path)
+	newCatalog, err := books.OpenCatalog(catalog.Path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,6 +224,17 @@ func TestCatalogSetCopies_SetsTheNumberOfCopiesTheBookWithTheReceivedID(t *testi
 	}
 	if 51 != book.Copies {
 		t.Fatalf("want %v copies after change, got %v", 51, book.Copies)
+	}
+}
+
+func TestNewCatalog_ReturnsANewCatalog(t *testing.T) {
+	t.Parallel()
+	catalog := books.NewCatalog()
+	got := len(catalog.GetAllBooks())
+	want := 0
+
+	if got != want {
+		t.Fatalf("want catalog to be empty and thus have zero length, got length %v", got)
 	}
 }
 
